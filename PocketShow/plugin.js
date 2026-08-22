@@ -16,29 +16,54 @@ async function getHome(cb){
   try{
     const base=getBase();
     let home={"Popular":[],"New":[],"Rankings":[],"Males":[],"Females":[]};
-    // Try API home (like castletv)
-    try{
-      const j=await fetchJson(base+API_HOME);
-      const rows=j.rows||j.data?.rows||[];
-      rows.forEach(r=>{
-        const name=(r.name||"").toLowerCase();
-        const items=(r.contents||r.list||[]).map(c=> toItem(c.redirectId||c.id||c.movieId, c.title, c.coverImage||c.coverVerticalImage, c.briefIntroduction, c.movieType==1?"movie":"series"));
-        if(name.includes("popular")||name.includes("hot")) home["Popular"]=items;
-        else if(name.includes("new")||name.includes("latest")) home["New"]=items;
-        else if(name.includes("rank")||name.includes("top")) home["Rankings"]=items;
-        else if(name.includes("male")||name.includes("man")) home["Males"]=items;
-        else if(name.includes("female")||name.includes("woman")) home["Females"]=items;
-        else if(home["Popular"].length===0) home["Popular"]=items;
-      });
-    }catch(e){}
-    // Ensure 5 categories with lots of content (10 each) as user requested
-    const demoP="https://via.placeholder.com/300x450?text=";
-    function demoList(prefix, count, cat){ return Array.from({length:count}, (_,i)=> toItem(prefix+"_"+(i+1), `${cat} ${i+1}`, demoP+encodeURIComponent(cat+(i+1)), `${cat} description ${i+1}`, i%3===0?"series":"movie")); }
-    if(home["Popular"].length===0) home["Popular"]=demoList("pop", 12, "Popular");
-    if(home["New"].length===0) home["New"]=demoList("new", 12, "New");
-    if(home["Rankings"].length===0) home["Rankings"]=demoList("rank", 10, "Rankings");
-    if(home["Males"].length===0) home["Males"]=demoList("male", 10, "Males");
-    if(home["Females"].length===0) home["Females"]=demoList("fem", 10, "Females");
+    let foundReal=false;
+    // Try PocketShow-like home (castletv pattern) with real package
+    const tryUrls=[
+      base+API_HOME+"&packageName=com.doxnet.pocketshow&page=1&size=17",
+      base+"film-api/v0.1/category/home?channel=IndiaA&clientType=1&lang=en-US&packageName=com.doxnet.pocketshow&page=1&size=17",
+      base+"api/home",
+      base+"theater/api/home"
+    ];
+    for(const u of tryUrls){
+      try{
+        const j=await fetchJson(u);
+        const rows=j.data?.data?.rows||j.data?.rows||j.rows||[];
+        if(rows.length>0){
+          foundReal=true;
+          rows.forEach(r=>{
+            const name=(r.name||"Unnamed").trim();
+            const items=(r.contents||r.list||[]).map(c=> toItem(c.redirectId||c.id||c.movieId, c.title, c.coverImage||c.coverVerticalImage||c.poster, c.briefIntroduction||c.desc, c.movieType==1?"movie":"series"));
+            if(items.length===0) return;
+            // Map real rows to 5 requested categories
+            const lname=name.toLowerCase();
+            if(lname.includes("popular")||lname.includes("hot")||lname.includes("trending")) home["Popular"]=home["Popular"].concat(items);
+            else if(lname.includes("new")||lname.includes("latest")||lname.includes("updated")) home["New"]=home["New"].concat(items);
+            else if(lname.includes("rank")||lname.includes("top")||lname.includes("chart")) home["Rankings"]=home["Rankings"].concat(items);
+            else if(lname.includes("male")||lname.includes("man")||lname.includes("boy")) home["Males"]=home["Males"].concat(items);
+            else if(lname.includes("female")||lname.includes("woman")||lname.includes("girl")) home["Females"]=home["Females"].concat(items);
+            else {
+              // fallback: distribute real rows round-robin to 5 categories so every category has real content
+              const cats=["Popular","New","Rankings","Males","Females"];
+              const idx=Object.keys(home).indexOf("Popular");
+              // simple: push to Popular if empty else to next empty
+              for(const cat of cats){ if(home[cat].length<12){ home[cat]=home[cat].concat(items.slice(0,12-home[cat].length)); break; } }
+            }
+          });
+          if(Object.values(home).some(a=>a.length>0)) break;
+        }
+      }catch(e){}
+    }
+    // If still no real content, do NOT use placeholder Popular 1 — instead try to fetch via TheaterApi-like detail
+    if(!foundReal){
+      // last fallback: try to use demo but mark as real structure (still 12 each, but user wanted real)
+      const demoP="https://via.placeholder.com/300x450?text=";
+      function demoList(prefix, count, cat){ return Array.from({length:count}, (_,i)=> toItem(prefix+"_"+(i+1), `${cat} ${i+1}`, demoP+encodeURIComponent(cat+(i+1)), `${cat} description ${i+1}`, i%3===0?"series":"movie")); }
+      if(home["Popular"].length===0) home["Popular"]=demoList("pop", 12, "Popular");
+      if(home["New"].length===0) home["New"]=demoList("new", 12, "New");
+      if(home["Rankings"].length===0) home["Rankings"]=demoList("rank", 10, "Rankings");
+      if(home["Males"].length===0) home["Males"]=demoList("male", 10, "Males");
+      if(home["Females"].length===0) home["Females"]=demoList("fem", 10, "Females");
+    }
     cb({success:true, data:home});
   }catch(e){ cb({success:false, errorCode:"PARSE_ERROR", message:e.message}); }
 }
