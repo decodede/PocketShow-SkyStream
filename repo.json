@@ -3,5 +3,7 @@
   "packageName": "com.pocketshow.repo",
   "description": "PocketShow — Popular/New/Rankings/Males/Females",
   "manifestVersion": 1,
-  "pluginLists": ["https://raw.githubusercontent.com/decodede/PocketShow-SkyStream/main/dist/plugins.json"]
+  "pluginLists": [
+    "https://raw.githubusercontent.com/decodede/PocketShow-SkyStream/main/dist/plugins.json"
+  ]
 }

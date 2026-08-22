@@ -1,0 +1,22 @@
+[
+  {
+    "packageName": "com.pocketshow.repo.pocketshow",
+    "name": "PocketShow",
+    "version": 1,
+    "baseUrl": "https://igkx.12pmba.top/",
+    "description": "PocketShow — Popular, New, Rankings, Males, Females with posters, description, every episode",
+    "authors": [
+      "decodede"
+    ],
+    "languages": [
+      "pt",
+      "en"
+    ],
+    "categories": [
+      "Movies",
+      "Series"
+    ],
+    "iconUrl": "https://raw.githubusercontent.com/decodede/PocketShow-SkyStream/main/icon.png",
+    "url": "https://raw.githubusercontent.com/decodede/PocketShow-SkyStream/main/dist/com.pocketshow.repo.pocketshow.sky"
+  }
+]
