@@ -1,0 +1,10 @@
+{
+  "name": "pocketshow-skystream",
+  "private": true,
+  "dependencies": {
+    "skystream-extractors": "latest"
+  },
+  "scripts": {
+    "deploy": "skystream deploy"
+  }
+}
