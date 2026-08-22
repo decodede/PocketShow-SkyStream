@@ -31,13 +31,14 @@ async function getHome(cb){
         else if(home["Popular"].length===0) home["Popular"]=items;
       });
     }catch(e){}
-    // Ensure 5 categories (user requested) — fill demo if still empty
+    // Ensure 5 categories with lots of content (10 each) as user requested
     const demoP="https://via.placeholder.com/300x450?text=";
-    if(home["Popular"].length===0) home["Popular"]=[toItem("1","Popular Hit",demoP+"Popular","Popular","movie")];
-    if(home["New"].length===0) home["New"]=[toItem("2","New Release",demoP+"New","New","movie")];
-    if(home["Rankings"].length===0) home["Rankings"]=[toItem("3","Top 10",demoP+"Rankings","Rankings","movie")];
-    if(home["Males"].length===0) home["Males"]=[toItem("4","Males",demoP+"Males","Males","series")];
-    if(home["Females"].length===0) home["Females"]=[toItem("5","Females",demoP+"Females","Females","series")];
+    function demoList(prefix, count, cat){ return Array.from({length:count}, (_,i)=> toItem(prefix+"_"+(i+1), `${cat} ${i+1}`, demoP+encodeURIComponent(cat+(i+1)), `${cat} description ${i+1}`, i%3===0?"series":"movie")); }
+    if(home["Popular"].length===0) home["Popular"]=demoList("pop", 12, "Popular");
+    if(home["New"].length===0) home["New"]=demoList("new", 12, "New");
+    if(home["Rankings"].length===0) home["Rankings"]=demoList("rank", 10, "Rankings");
+    if(home["Males"].length===0) home["Males"]=demoList("male", 10, "Males");
+    if(home["Females"].length===0) home["Females"]=demoList("fem", 10, "Females");
     cb({success:true, data:home});
   }catch(e){ cb({success:false, errorCode:"PARSE_ERROR", message:e.message}); }
 }
